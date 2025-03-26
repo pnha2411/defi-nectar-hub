@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { ArrowDown, Settings, Info } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowDown, Settings } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -17,14 +17,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
@@ -41,7 +34,6 @@ const mockTokens: Token[] = [
   { id: 'base', name: 'Base', symbol: 'BASE', iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', balance: 245.12 },
   { id: 'usdc', name: 'USD Coin', symbol: 'USDC', iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png', balance: 500.75 },
   { id: 'usdt', name: 'Tether', symbol: 'USDT', iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png', balance: 1250.50 },
-  { id: 'dai', name: 'Dai', symbol: 'DAI', iconUrl: 'https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png', balance: 432.18 },
 ];
 
 export const SwapInterface: React.FC = () => {
@@ -49,7 +41,6 @@ export const SwapInterface: React.FC = () => {
   const [toToken, setToToken] = useState<string>(mockTokens[2].id);
   const [fromAmount, setFromAmount] = useState<string>('1');
   const [toAmount, setToAmount] = useState<string>('1750.25');
-  const [slippage, setSlippage] = useState<number>(0.5);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Calculate rate
@@ -78,10 +69,6 @@ export const SwapInterface: React.FC = () => {
         setToAmount('');
       }
     }
-  };
-
-  const handleSlippageChange = (value: number[]) => {
-    setSlippage(value[0]);
   };
 
   const handleMaxClick = () => {
@@ -229,41 +216,6 @@ export const SwapInterface: React.FC = () => {
         <div className="px-1 flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Exchange Rate</span>
           <span>1 {fromTokenObj?.symbol} ≈ 1750.25 {toTokenObj?.symbol}</span>
-        </div>
-        
-        {/* Slippage Settings */}
-        <div className="rounded-xl bg-muted/40 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1">
-              <Label>Slippage Tolerance</Label>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="w-[200px] text-xs">
-                      Your transaction will revert if the price changes unfavorably by more than this percentage.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <span className="font-medium text-sm">{slippage}%</span>
-          </div>
-          <Slider
-            defaultValue={[0.5]}
-            max={2}
-            min={0.1}
-            step={0.1}
-            value={[slippage]}
-            onValueChange={handleSlippageChange}
-            className="w-full"
-          />
-          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>0.1%</span>
-            <span>2%</span>
-          </div>
         </div>
       </CardContent>
       <CardFooter>

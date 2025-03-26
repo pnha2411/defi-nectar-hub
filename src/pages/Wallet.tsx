@@ -3,10 +3,8 @@ import React, { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { TransactionHistory } from '@/components/TransactionHistory';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowUpRight, ArrowDownRight, Copy, ExternalLink, CreditCard, Send } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Copy, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   Dialog,
@@ -29,7 +27,7 @@ interface Asset {
 }
 
 const Wallet = () => {
-  const [activeDialog, setActiveDialog] = useState<'send' | 'receive' | 'buy' | null>(null);
+  const [activeDialog, setActiveDialog] = useState<'send' | 'receive' | null>(null);
   const [sendAmount, setSendAmount] = useState('');
   const [sendAddress, setSendAddress] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -50,26 +48,12 @@ const Wallet = () => {
       iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png' 
     },
     { 
-      name: 'Tether', 
-      symbol: 'USDT', 
-      balance: 500.50, 
-      value: 500.50, 
-      iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png' 
-    },
-    { 
       name: 'Base', 
       symbol: 'BASE', 
       balance: 75.25, 
       value: 215.97, 
       iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' 
     },
-    { 
-      name: 'Dai', 
-      symbol: 'DAI', 
-      balance: 300.00, 
-      value: 300.00, 
-      iconUrl: 'https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.png' 
-    }
   ];
 
   const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
@@ -90,10 +74,6 @@ const Wallet = () => {
     setActiveDialog('receive');
   };
 
-  const handleBuyDialog = () => {
-    setActiveDialog('buy');
-  };
-
   const handleSendSubmit = () => {
     if (!sendAddress || !sendAmount || parseFloat(sendAmount) <= 0) {
       toast.error('Please enter a valid amount and address');
@@ -107,10 +87,6 @@ const Wallet = () => {
     setActiveDialog(null);
     setSendAmount('');
     setSendAddress('');
-  };
-
-  const formatAddress = (address: string) => {
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
   return (
@@ -186,30 +162,13 @@ const Wallet = () => {
                   </Button>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between pt-0">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  asChild
-                >
-                  <a 
-                    href={`https://basescan.org/address/${walletAddress}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1"
-                  >
-                    View <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
-              </CardFooter>
             </Card>
             
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-3 gap-2">
+              <CardContent className="grid grid-cols-2 gap-2">
                 <Button 
                   variant="outline" 
                   className="flex flex-col items-center justify-center h-20 px-2 py-1 hover:bg-accent hover:border-primary/30"
@@ -226,20 +185,12 @@ const Wallet = () => {
                   <ArrowDownRight className="h-5 w-5 mb-1" />
                   <span className="text-xs">Receive</span>
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex flex-col items-center justify-center h-20 px-2 py-1 hover:bg-accent hover:border-primary/30"
-                  onClick={handleBuyDialog}
-                >
-                  <CreditCard className="h-5 w-5 mb-1" />
-                  <span className="text-xs">Buy</span>
-                </Button>
               </CardContent>
             </Card>
           </div>
         </div>
         
-        <TransactionHistory limit={10} />
+        <TransactionHistory limit={5} />
       </div>
 
       {/* Send Dialog */}
@@ -321,63 +272,6 @@ const Wallet = () => {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Buy Dialog */}
-      <Dialog open={activeDialog === 'buy'} onOpenChange={(open) => !open && setActiveDialog(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Buy Crypto</DialogTitle>
-            <DialogDescription>
-              Purchase crypto with credit card or bank transfer.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Tabs defaultValue="card">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="card">Card</TabsTrigger>
-                <TabsTrigger value="bank">Bank Transfer</TabsTrigger>
-              </TabsList>
-              <TabsContent value="card" className="space-y-4 pt-4">
-                <div className="grid gap-2">
-                  <Label>Select Token</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {assets.slice(0, 4).map((asset) => (
-                      <Button 
-                        key={asset.symbol}
-                        variant="outline" 
-                        className="h-auto py-2 justify-start"
-                      >
-                        <img 
-                          src={asset.iconUrl} 
-                          alt={asset.symbol}
-                          className="w-5 h-5 mr-2"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://placehold.co/200x200/EAEAEA/6366F1?text=" + asset.symbol.substring(0, 2);
-                          }}
-                        />
-                        {asset.symbol}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Amount (USD)</Label>
-                  <Input placeholder="100.00" />
-                </div>
-                <Button className="w-full">Continue to Payment</Button>
-              </TabsContent>
-              <TabsContent value="bank" className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Connect your bank account to deposit funds directly.
-                  </p>
-                  <Button className="w-full">Connect Bank Account</Button>
-                </div>
-              </TabsContent>
-            </Tabs>
           </div>
         </DialogContent>
       </Dialog>

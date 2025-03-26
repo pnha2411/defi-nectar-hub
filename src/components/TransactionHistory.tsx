@@ -1,6 +1,11 @@
 
 import React from 'react';
 import { 
+  ArrowDownLeft, 
+  ArrowUpRight, 
+  RotateCw
+} from 'lucide-react';
+import { 
   Card, 
   CardContent, 
   CardDescription, 
@@ -8,62 +13,57 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ArrowUpRight, ArrowDownRight, ArrowLeftRight, ExternalLink } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface Transaction {
   id: string;
   type: 'send' | 'receive' | 'swap';
-  timestamp: Date;
   amount: string;
   token: string;
-  fromToken?: string;
   toToken?: string;
+  timestamp: Date;
   status: 'completed' | 'pending' | 'failed';
-  hash: string;
+  address: string;
 }
 
 const mockTransactions: Transaction[] = [
   {
-    id: '1',
-    type: 'swap',
-    timestamp: new Date(Date.now() - 1000 * 60 * 15),
-    amount: '0.5',
-    token: 'ETH',
-    fromToken: 'ETH',
-    toToken: 'USDC',
-    status: 'completed',
-    hash: '0x1234...5678'
-  },
-  {
-    id: '2',
-    type: 'receive',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    amount: '1200',
-    token: 'USDC',
-    status: 'completed',
-    hash: '0x9876...5432'
-  },
-  {
-    id: '3',
+    id: 'tx1',
     type: 'send',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    amount: '0.15',
+    amount: '0.25',
     token: 'ETH',
+    timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
     status: 'completed',
-    hash: '0xabcd...efgh'
+    address: '0x71C7...976F'
   },
   {
-    id: '4',
-    type: 'swap',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
+    id: 'tx2',
+    type: 'receive',
     amount: '500',
     token: 'USDC',
-    fromToken: 'USDC',
-    toToken: 'ETH',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
     status: 'completed',
-    hash: '0xijkl...mnop'
+    address: '0x89B2...A45D'
   },
+  {
+    id: 'tx3',
+    type: 'swap',
+    amount: '100',
+    token: 'USDT',
+    toToken: 'ETH',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+    status: 'completed',
+    address: 'swap'
+  },
+  {
+    id: 'tx4',
+    type: 'send',
+    amount: '0.5',
+    token: 'ETH',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
+    status: 'failed',
+    address: '0x62A1...B78C'
+  }
 ];
 
 interface TransactionHistoryProps {
@@ -75,98 +75,96 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   className,
   limit = 5
 }) => {
-  const formatDate = (date: Date) => {
+  const transactions = mockTransactions.slice(0, limit);
+  
+  const formatTime = (date: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    }
+    
     const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    }
+    
     const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return 'Yesterday';
     return `${diffDays}d ago`;
   };
-
-  const getTransactionIcon = (type: Transaction['type']) => {
-    switch (type) {
-      case 'send':
-        return <ArrowUpRight className="w-4 h-4 text-defi-red" />;
-      case 'receive':
-        return <ArrowDownRight className="w-4 h-4 text-defi-green" />;
-      case 'swap':
-        return <ArrowLeftRight className="w-4 h-4 text-defi-blue" />;
-    }
-  };
-
-  const getTransactionText = (tx: Transaction) => {
-    switch (tx.type) {
-      case 'send':
-        return `Sent ${tx.amount} ${tx.token}`;
-      case 'receive':
-        return `Received ${tx.amount} ${tx.token}`;
-      case 'swap':
-        return `Swapped ${tx.amount} ${tx.fromToken} for ${tx.toToken}`;
-    }
-  };
-
-  const getLinkForHash = (hash: string) => {
-    return `https://basescan.org/tx/${hash}`;
-  };
-
+  
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="pb-2">
+    <Card className={cn("h-full", className)}>
+      <CardHeader className="pb-3">
         <CardTitle>Recent Transactions</CardTitle>
-        <CardDescription>Your latest account activity</CardDescription>
+        <CardDescription>
+          Your recent transaction history
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        {mockTransactions.length > 0 ? (
-          <div className="space-y-4">
-            {mockTransactions.slice(0, limit).map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between">
+        <div className="space-y-3">
+          {transactions.length > 0 ? (
+            transactions.map((tx) => (
+              <div key={tx.id} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                    {getTransactionIcon(tx.type)}
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center",
+                    tx.type === 'send' ? "bg-orange-100 text-orange-600" : 
+                    tx.type === 'receive' ? "bg-green-100 text-green-600" : 
+                    "bg-blue-100 text-blue-600"
+                  )}>
+                    {tx.type === 'send' ? (
+                      <ArrowUpRight className="h-4 w-4" />
+                    ) : tx.type === 'receive' ? (
+                      <ArrowDownLeft className="h-4 w-4" />
+                    ) : (
+                      <RotateCw className="h-4 w-4" />
+                    )}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{getTransactionText(tx)}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(tx.timestamp)}</p>
+                    <div className="font-medium">
+                      {tx.type === 'send' ? 'Sent' : 
+                       tx.type === 'receive' ? 'Received' : 
+                       'Swapped'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {tx.type === 'swap' 
+                        ? `${tx.amount} ${tx.token} → ${tx.toToken}`
+                        : `To: ${tx.address}`}
+                    </div>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7" 
-                  asChild
-                >
-                  <a 
-                    href={getLinkForHash(tx.hash)} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
+                <div className="text-right">
+                  <div className={cn(
+                    "font-medium",
+                    tx.type === 'send' ? "text-red-600" : 
+                    tx.type === 'receive' ? "text-green-600" : 
+                    ""
+                  )}>
+                    {tx.type === 'send' ? '-' : tx.type === 'receive' ? '+' : ''}{tx.amount} {tx.token}
+                  </div>
+                  <div className="flex items-center justify-end gap-1.5 text-xs">
+                    <span className="text-muted-foreground">
+                      {formatTime(tx.timestamp)}
+                    </span>
+                    <Badge 
+                      variant={tx.status === 'completed' ? 'outline' : tx.status === 'pending' ? 'secondary' : 'destructive'}
+                      className="text-[10px] px-1.5 py-0 h-auto font-normal"
+                    >
+                      {tx.status}
+                    </Badge>
+                  </div>
+                </div>
               </div>
-            ))}
-
-            {mockTransactions.length > limit && (
-              <Button variant="ghost" size="sm" className="w-full mt-2 text-xs">
-                View All Transactions
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <p className="text-muted-foreground mb-2">No transactions yet</p>
-            <Button variant="outline" size="sm">
-              Make Your First Transaction
-            </Button>
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No transactions yet
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
