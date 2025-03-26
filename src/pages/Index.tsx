@@ -15,12 +15,12 @@ const Index = () => {
             <div className="flex justify-center mb-4">
               <img 
                 src="/public/lovable-uploads/48a01385-ec70-4d00-a36e-0d477a509b59.png" 
-                alt="LeonFi Logo" 
+                alt="LeoFi Logo" 
                 className="h-20 w-auto mb-2" 
               />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              The <span className="bg-gradient-leon bg-clip-text text-transparent">LeonFi</span> Platform on Base
+              <span className="bg-gradient-leon bg-clip-text text-transparent">LeoFi</span> Defi Kit 
             </h1>
             <p className="text-muted-foreground text-lg">
               Swap, earn, and manage your assets with a simple and secure decentralized platform

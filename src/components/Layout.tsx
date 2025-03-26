@@ -47,9 +47,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container flex h-16 items-center px-6 sm:px-8">
           <Link to="/" className="flex items-center gap-2 mr-6">
             <div className="w-10 h-10 flex items-center justify-center">
-              <img src="/public/lovable-uploads/48a01385-ec70-4d00-a36e-0d477a509b59.png" alt="LeonFi Logo" className="w-full h-full object-contain" />
+              <img src="/public/lovable-uploads/48a01385-ec70-4d00-a36e-0d477a509b59.png" alt="LeoFi Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-bold text-xl hidden sm:inline-block bg-gradient-leon bg-clip-text text-transparent">LeonFi</span>
+            <span className="font-bold text-xl hidden sm:inline-block bg-gradient-leon bg-clip-text text-transparent">LeoFi</span>
           </Link>
           
           <nav className="hidden md:flex flex-1 items-center space-x-1">
