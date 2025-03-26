@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -136,5 +137,9 @@
 
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-[1.02];
+  }
+  
+  .bg-gradient-leon {
+    @apply bg-gradient-to-r from-leon-red to-leon-orange;
   }
 }
