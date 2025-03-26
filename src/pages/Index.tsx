@@ -14,7 +14,7 @@ const Index = () => {
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <div className="flex justify-center mb-4">
               <img 
-                src="/public/lovable-uploads/48a01385-ec70-4d00-a36e-0d477a509b59.png" 
+                src="leofi.png" 
                 alt="LeoFi Logo" 
                 className="h-20 w-auto mb-2" 
               />
