@@ -147,7 +147,7 @@ export const WalletConnectButton: React.FC = () => {
                 <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 mb-4">
                   <span className="text-sm font-medium">Balance:</span>
                   <span className="font-medium">
-                    {parseFloat(balanceData.formatted).toFixed(4)} {balanceData.symbol}
+                    {parseFloat(balanceData.formatted).toFixed(0)} STT
                   </span>
                 </div>
               )}
@@ -157,7 +157,7 @@ export const WalletConnectButton: React.FC = () => {
                   className="justify-start hover-scale"
                   onClick={() => {
                     if (address) {
-                      window.open(`https://basescan.org/address/${address}`, '_blank');
+                      window.open(`https://shannon-explorer.somnia.network/address/${address}`, '_blank');
                     }
                   }}
                 >

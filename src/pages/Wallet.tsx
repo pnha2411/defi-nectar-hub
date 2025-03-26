@@ -48,11 +48,11 @@ const Wallet = () => {
       iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png' 
     },
     { 
-      name: 'Base', 
-      symbol: 'BASE', 
+      name: 'Somnia', 
+      symbol: 'STT', 
       balance: 75.25, 
       value: 215.97, 
-      iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' 
+      iconUrl: 'stt.png' 
     },
   ];
 
@@ -190,7 +190,7 @@ const Wallet = () => {
           </div>
         </div>
         
-        <TransactionHistory limit={5} />
+        {/* <TransactionHistory limit={5} /> */}
       </div>
 
       {/* Send Dialog */}

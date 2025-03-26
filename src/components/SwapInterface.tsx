@@ -38,6 +38,14 @@ export const SwapInterface: React.FC = () => {
   
   const mockTokens: Token[] = [
     { 
+      id: 'stt', 
+      name: 'Somnia', 
+      symbol: 'STT', 
+      iconUrl: 'stt.png',
+      address: BASE_TOKENS.ETH.address,
+      decimals: BASE_TOKENS.ETH.decimals
+    },
+    { 
       id: 'eth', 
       name: 'Ethereum', 
       symbol: 'ETH', 

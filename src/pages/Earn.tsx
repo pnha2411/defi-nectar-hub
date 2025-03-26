@@ -16,19 +16,19 @@ const Earn = () => {
       featured: true
     },
     {
-      name: 'BASE/USDT',
+      name: 'STT/USDT',
       tokens: [
-        { symbol: 'BASE', iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+        { symbol: 'STT', iconUrl: 'stt.png' },
         { symbol: 'USDT', iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png' }
       ],
       apy: 7.8,
       tvl: 1350000
     },
     {
-      name: 'ETH/BASE',
+      name: 'ETH/STT',
       tokens: [
         { symbol: 'ETH', iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
-        { symbol: 'BASE', iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' }
+        { symbol: 'STT', iconUrl: 'stt.png' }
       ],
       apy: 3.5,
       tvl: 980000
