@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -66,13 +65,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				defi: {
-					'blue': '#0052FF',
-					'light-blue': '#00A3FF',
-					'mint': '#11CABE',
-					'green': '#05B169',
-					'purple': '#8358FF',
-					'red': '#FF433E',
+				leon: {
+					'red': '#ED2939',
+					'orange': '#F47B20',
+					'light-orange': '#FF8C2B',
+					'dark-orange': '#E35205',
 				}
 			},
 			borderRadius: {
@@ -170,6 +167,9 @@ export default {
 				'glow': '0 0 15px rgba(0, 82, 255, 0.15)',
 				'card': '0 2px 10px rgba(0, 0, 0, 0.08)',
 			},
+			backgroundImage: {
+				'gradient-leon': 'linear-gradient(to right, #ED2939, #F47B20)',
+			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

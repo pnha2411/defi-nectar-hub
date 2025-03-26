@@ -46,10 +46,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm border-b">
         <div className="container flex h-16 items-center px-6 sm:px-8">
           <Link to="/" className="flex items-center gap-2 mr-6">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-defi-blue to-defi-mint flex items-center justify-center text-white font-bold">
-              B
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src="/public/lovable-uploads/48a01385-ec70-4d00-a36e-0d477a509b59.png" alt="LeonFi Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-bold text-xl hidden sm:inline-block">Base DeFi</span>
+            <span className="font-bold text-xl hidden sm:inline-block bg-gradient-leon bg-clip-text text-transparent">LeonFi</span>
           </Link>
           
           <nav className="hidden md:flex flex-1 items-center space-x-1">
@@ -80,12 +80,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               className={cn(
                 "flex flex-col items-center py-3 px-4 text-xs font-medium transition-colors",
                 item.active 
-                  ? "text-primary" 
+                  ? "text-leon-red" 
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               {React.cloneElement(item.icon as React.ReactElement, {
-                className: cn("w-5 h-5 mb-1", item.active ? "text-primary" : "text-muted-foreground")
+                className: cn("w-5 h-5 mb-1", item.active ? "text-leon-red" : "text-muted-foreground")
               })}
               {item.title}
             </Link>
