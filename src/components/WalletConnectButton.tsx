@@ -11,12 +11,19 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useAccount, useConnect, useDisconnect, useBalance } from 'wagmi';
+import { injected } from 'wagmi/connectors';
 
 export const WalletConnectButton: React.FC = () => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  // Wagmi hooks
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { data: balanceData } = useBalance({
+    address,
+  });
 
   const mockWallets = [
     { id: 'metamask', name: 'MetaMask', icon: '🦊' },
@@ -26,29 +33,30 @@ export const WalletConnectButton: React.FC = () => {
   ];
 
   const connectWallet = (walletId: string) => {
-    setIsConnecting(true);
-    
-    // Simulate connection delay
-    setTimeout(() => {
-      // Mock wallet address 
-      const mockAddress = '0x' + Array.from({length: 40}, () => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join('');
-      
-      setWalletAddress(mockAddress);
-      setIsConnected(true);
-      setIsConnecting(false);
-      setDialogOpen(false);
-      
-      toast.success('Wallet connected successfully', {
-        description: `Connected to ${mockAddress.substring(0, 6)}...${mockAddress.substring(38)}`,
+    try {
+      // Currently only supporting MetaMask
+      if (walletId === 'metamask') {
+        connect({ connector: injected() });
+        setDialogOpen(false);
+        
+        toast.success('Wallet connected successfully', {
+          description: address ? `Connected to ${formatAddress(address)}` : undefined,
+        });
+      } else {
+        toast.info('Coming soon', {
+          description: 'This wallet option will be supported in the future.',
+        });
+      }
+    } catch (error) {
+      toast.error('Failed to connect wallet', {
+        description: error instanceof Error ? error.message : 'Unknown error',
       });
-    }, 1000);
+    }
   };
 
   const disconnectWallet = () => {
-    setIsConnected(false);
-    setWalletAddress('');
+    disconnect();
+    setDialogOpen(false);
     
     toast.info('Wallet disconnected', {
       description: 'Your wallet has been disconnected',
@@ -56,8 +64,10 @@ export const WalletConnectButton: React.FC = () => {
   };
 
   const copyAddress = () => {
-    navigator.clipboard.writeText(walletAddress);
-    toast.success('Address copied to clipboard');
+    if (address) {
+      navigator.clipboard.writeText(address);
+      toast.success('Address copied to clipboard');
+    }
   };
 
   const formatAddress = (address: string) => {
@@ -68,7 +78,7 @@ export const WalletConnectButton: React.FC = () => {
 
   return (
     <>
-      {isConnected ? (
+      {isConnected && address ? (
         <div className="flex items-center">
           <Button 
             variant="outline" 
@@ -78,7 +88,7 @@ export const WalletConnectButton: React.FC = () => {
           >
             <div className="w-2 h-2 rounded-full bg-defi-green mr-2 animate-pulse-soft"></div>
             <span className="hidden sm:inline mr-1">Connected:</span>
-            <span className="font-mono" onClick={copyAddress}>{formatAddress(walletAddress)}</span>
+            <span className="font-mono" onClick={copyAddress}>{formatAddress(address)}</span>
           </Button>
         </div>
       ) : (
@@ -103,15 +113,9 @@ export const WalletConnectButton: React.FC = () => {
                   variant="outline"
                   className="justify-start h-14 px-4 py-3 hover-scale"
                   onClick={() => connectWallet(wallet.id)}
-                  disabled={isConnecting}
                 >
                   <div className="mr-3 text-xl">{wallet.icon}</div>
                   <span>{wallet.name}</span>
-                  {isConnecting && (
-                    <div className="ml-auto">
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                    </div>
-                  )}
                 </Button>
               ))}
             </div>
@@ -123,7 +127,7 @@ export const WalletConnectButton: React.FC = () => {
       )}
 
       {/* Wallet Details Dialog */}
-      {isConnected && (
+      {isConnected && address && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -134,13 +138,29 @@ export const WalletConnectButton: React.FC = () => {
             </DialogHeader>
             <div className="py-4">
               <div className="flex items-center justify-between px-1 py-2 rounded-lg bg-muted/50 mb-4">
-                <div className="font-mono text-sm">{formatAddress(walletAddress)}</div>
+                <div className="font-mono text-sm">{formatAddress(address)}</div>
                 <Button variant="ghost" size="sm" onClick={copyAddress}>
                   Copy
                 </Button>
               </div>
+              {balanceData && (
+                <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted/50 mb-4">
+                  <span className="text-sm font-medium">Balance:</span>
+                  <span className="font-medium">
+                    {parseFloat(balanceData.formatted).toFixed(4)} {balanceData.symbol}
+                  </span>
+                </div>
+              )}
               <div className="grid gap-2">
-                <Button variant="outline" className="justify-start hover-scale">
+                <Button 
+                  variant="outline" 
+                  className="justify-start hover-scale"
+                  onClick={() => {
+                    if (address) {
+                      window.open(`https://basescan.org/address/${address}`, '_blank');
+                    }
+                  }}
+                >
                   View on Explorer
                 </Button>
                 <Button variant="destructive" onClick={disconnectWallet}>

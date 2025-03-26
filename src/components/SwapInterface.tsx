@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowDown, Settings } from 'lucide-react';
 import { 
   Card, 
@@ -20,28 +20,73 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { useAccount, useBalance, useWriteContract, useReadContract } from 'wagmi';
+import { BASE_TOKENS, erc20ABI, parseTokenAmount } from '@/lib/erc20contract';
+import { formatUnits, parseUnits } from 'viem';
 
 interface Token {
   id: string;
   name: string;
   symbol: string;
   iconUrl: string;
-  balance?: number;
+  address: string;
+  decimals: number;
 }
 
-const mockTokens: Token[] = [
-  { id: 'eth', name: 'Ethereum', symbol: 'ETH', iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', balance: 1.245 },
-  { id: 'base', name: 'Base', symbol: 'BASE', iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', balance: 245.12 },
-  { id: 'usdc', name: 'USD Coin', symbol: 'USDC', iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png', balance: 500.75 },
-  { id: 'usdt', name: 'Tether', symbol: 'USDT', iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png', balance: 1250.50 },
-];
-
 export const SwapInterface: React.FC = () => {
+  const { address, isConnected } = useAccount();
+  
+  const mockTokens: Token[] = [
+    { 
+      id: 'eth', 
+      name: 'Ethereum', 
+      symbol: 'ETH', 
+      iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
+      address: BASE_TOKENS.ETH.address,
+      decimals: BASE_TOKENS.ETH.decimals
+    },
+    { 
+      id: 'base', 
+      name: 'Base', 
+      symbol: 'BASE', 
+      iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
+      address: BASE_TOKENS.BASE.address,
+      decimals: BASE_TOKENS.BASE.decimals
+    },
+    { 
+      id: 'usdc', 
+      name: 'USD Coin', 
+      symbol: 'USDC', 
+      iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
+      address: BASE_TOKENS.USDC.address,
+      decimals: BASE_TOKENS.USDC.decimals
+    },
+    { 
+      id: 'usdt', 
+      name: 'Tether', 
+      symbol: 'USDT', 
+      iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
+      address: BASE_TOKENS.USDT.address,
+      decimals: BASE_TOKENS.USDT.decimals
+    },
+  ];
+
   const [fromToken, setFromToken] = useState<string>(mockTokens[0].id);
   const [toToken, setToToken] = useState<string>(mockTokens[2].id);
   const [fromAmount, setFromAmount] = useState<string>('1');
   const [toAmount, setToAmount] = useState<string>('1750.25');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Get token balance using wagmi
+  const { data: fromTokenBalance } = useBalance({
+    address,
+    token: fromToken !== 'eth' && fromToken !== 'base' 
+      ? mockTokens.find(t => t.id === fromToken)?.address as `0x${string}` 
+      : undefined,
+  });
+
+  // Write contract for token transfers
+  const { writeContractAsync } = useWriteContract();
 
   // Calculate rate
   const fromTokenObj = mockTokens.find(t => t.id === fromToken);
@@ -72,28 +117,71 @@ export const SwapInterface: React.FC = () => {
   };
 
   const handleMaxClick = () => {
-    const token = mockTokens.find(t => t.id === fromToken);
-    if (token && token.balance) {
-      setFromAmount(token.balance.toString());
-      const newValue = (token.balance * 1750.25).toFixed(2);
+    if (fromTokenBalance) {
+      setFromAmount(fromTokenBalance.formatted);
+      const newValue = (parseFloat(fromTokenBalance.formatted) * 1750.25).toFixed(2);
       setToAmount(newValue);
     }
   };
 
-  const executeSwap = () => {
+  const executeSwap = async () => {
     if (!fromAmount || parseFloat(fromAmount) <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
+
+    if (!isConnected || !address) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
     
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Swap executed successfully', {
-        description: `Swapped ${fromAmount} ${fromTokenObj?.symbol} for ${toAmount} ${toTokenObj?.symbol}`,
+
+    try {
+      // This is a simulation - in a real app, you would call a swap contract
+      if (fromTokenObj && fromTokenObj.id !== 'eth' && fromTokenObj.id !== 'base') {
+        // For ERC20 tokens, we need to approve and then swap
+        const amount = parseTokenAmount(fromAmount, {
+          name: fromTokenObj.name,
+          symbol: fromTokenObj.symbol,
+          decimals: fromTokenObj.decimals,
+          address: fromTokenObj.address as `0x${string}`
+        });
+
+        // In a real DeFi app, you would approve a DEX router contract here
+        // This is a simplified example
+        await writeContractAsync({
+          address: fromTokenObj.address as `0x${string}`,
+          abi: erc20ABI,
+          functionName: 'approve',
+          args: [address, amount],
+        });
+
+        // After approval, you would call the swap method on the router
+        // This is simulated for now
+        setTimeout(() => {
+          toast.success('Swap executed successfully', {
+            description: `Swapped ${fromAmount} ${fromTokenObj?.symbol} for ${toAmount} ${toTokenObj?.symbol}`,
+          });
+          setIsLoading(false);
+        }, 2000);
+      } else {
+        // For native tokens like ETH/BASE
+        // Simulate API call
+        setTimeout(() => {
+          toast.success('Swap executed successfully', {
+            description: `Swapped ${fromAmount} ${fromTokenObj?.symbol} for ${toAmount} ${toTokenObj?.symbol}`,
+          });
+          setIsLoading(false);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Swap error:', error);
+      toast.error('Failed to execute swap', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
       });
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -113,7 +201,7 @@ export const SwapInterface: React.FC = () => {
           <div className="flex justify-between mb-2">
             <Label htmlFor="from-amount">From</Label>
             <div className="text-xs text-muted-foreground">
-              Balance: {mockTokens.find(t => t.id === fromToken)?.balance?.toFixed(4) || '0'} {mockTokens.find(t => t.id === fromToken)?.symbol}
+              Balance: {fromTokenBalance ? parseFloat(fromTokenBalance.formatted).toFixed(4) : '0'} {fromTokenObj?.symbol}
             </div>
           </div>
           <div className="flex gap-2">
@@ -153,6 +241,7 @@ export const SwapInterface: React.FC = () => {
               size="sm" 
               className="h-6 text-xs px-2 hover:bg-accent"
               onClick={handleMaxClick}
+              disabled={!isConnected}
             >
               MAX
             </Button>
@@ -176,7 +265,8 @@ export const SwapInterface: React.FC = () => {
           <div className="flex justify-between mb-2">
             <Label htmlFor="to-amount">To (estimated)</Label>
             <div className="text-xs text-muted-foreground">
-              Balance: {mockTokens.find(t => t.id === toToken)?.balance?.toFixed(4) || '0'} {mockTokens.find(t => t.id === toToken)?.symbol}
+              {/* Balance would come from wagmi in a real app */}
+              Balance: {isConnected ? '0.00' : '0'} {toTokenObj?.symbol}
             </div>
           </div>
           <div className="flex gap-2">
@@ -221,7 +311,7 @@ export const SwapInterface: React.FC = () => {
       <CardFooter>
         <Button 
           className="w-full"
-          disabled={!fromAmount || parseFloat(fromAmount) <= 0 || isLoading}
+          disabled={!fromAmount || parseFloat(fromAmount) <= 0 || isLoading || !isConnected}
           onClick={executeSwap}
         >
           {isLoading ? (
@@ -229,7 +319,7 @@ export const SwapInterface: React.FC = () => {
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
               Swapping...
             </>
-          ) : 'Swap Tokens'}
+          ) : !isConnected ? 'Connect Wallet to Swap' : 'Swap Tokens'}
         </Button>
       </CardFooter>
     </Card>
