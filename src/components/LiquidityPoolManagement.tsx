@@ -16,10 +16,17 @@ export const LiquidityPoolManagement = () => {
     });
   };
 
+  const handleCreatePool = (tokenA: string, tokenB: string, amountA: string, amountB: string, fee: number) => {
+    toast.success('Pool created', {
+      description: `Created ${tokenA}-${tokenB} pool with ${fee}% fee and added initial liquidity of ${amountA} ${tokenA} and ${amountB} ${tokenB}`,
+    });
+  };
+
   return (
     <LiquidityPool 
       onAddLiquidity={handleAddLiquidity}
       onRemoveLiquidity={handleRemoveLiquidity}
+      onCreatePool={handleCreatePool}
     />
   );
 };

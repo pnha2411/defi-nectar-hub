@@ -12,6 +12,7 @@ export interface LiquidityPoolProps {
   className?: string;
   onAddLiquidity?: (tokenA: string, tokenB: string, amountA: string, amountB: string) => void;
   onRemoveLiquidity?: (tokenA: string, tokenB: string, percent: number) => void;
+  onCreatePool?: (tokenA: string, tokenB: string, amountA: string, amountB: string, fee: number) => void;
   defaultTokenA?: string;
   defaultTokenB?: string;
   isLoading?: boolean;
@@ -22,6 +23,7 @@ export const LiquidityPool: React.FC<LiquidityPoolProps> = ({
   className,
   onAddLiquidity,
   onRemoveLiquidity,
+  onCreatePool,
   defaultTokenA = 'ETH',
   defaultTokenB = 'USDC',
   isLoading = false,
@@ -33,6 +35,7 @@ export const LiquidityPool: React.FC<LiquidityPoolProps> = ({
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [percent, setPercent] = useState(50);
+  const [fee, setFee] = useState(0.3); // Default fee percentage
   
   const { isConnected } = useAccount();
 
@@ -76,18 +79,101 @@ export const LiquidityPool: React.FC<LiquidityPoolProps> = ({
     }
   };
 
+  const handleCreatePool = () => {
+    if (!amountA || !amountB || parseFloat(amountA) <= 0 || parseFloat(amountB) <= 0) {
+      toast.error('Please enter valid amounts for initial liquidity');
+      return;
+    }
+    
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+    
+    if (onCreatePool) {
+      onCreatePool(tokenA, tokenB, amountA, amountB, fee);
+    } else {
+      toast.success('Pool created', {
+        description: `Created ${tokenA}-${tokenB} pool with ${fee}% fee and added initial liquidity of ${amountA} ${tokenA} and ${amountB} ${tokenB}`,
+      });
+    }
+  };
+
+  const poolExists = true; // This would be determined by querying the contract in a real implementation
+
   return (
     <Card className={className}>
       <CardHeader className="space-y-1">
         <CardTitle className="text-xl">Liquidity Pool</CardTitle>
-        <CardDescription>Add or remove liquidity to earn fees</CardDescription>
+        <CardDescription>Create, add or remove liquidity to earn fees</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 mb-4">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="create">Create Pool</TabsTrigger>
             <TabsTrigger value="add">Add Liquidity</TabsTrigger>
             <TabsTrigger value="remove">Remove Liquidity</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="create" className="space-y-4">
+            <div className="space-y-4">
+              <TokenSelector
+                type="from"
+                selectedToken={tokenA}
+                onTokenSelect={setTokenA}
+                amount={amountA}
+                onAmountChange={setAmountA}
+                supportedTokens={supportedTokens.filter(token => token !== tokenB)}
+              />
+              
+              <TokenSelector
+                type="from"
+                selectedToken={tokenB}
+                onTokenSelect={setTokenB}
+                amount={amountB}
+                onAmountChange={setAmountB}
+                supportedTokens={supportedTokens.filter(token => token !== tokenA)}
+              />
+              
+              <div className="space-y-2">
+                <Label>Fee Tier</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[0.05, 0.3, 1].map((feeValue) => (
+                    <Button 
+                      key={feeValue} 
+                      variant={fee === feeValue ? "default" : "outline"}
+                      onClick={() => setFee(feeValue)}
+                    >
+                      {feeValue}%
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {fee === 0.05 ? "Best for stable pairs" : 
+                   fee === 0.3 ? "Best for most pairs" : 
+                   "Best for exotic pairs"}
+                </p>
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                <p>You are creating a new {tokenA}/{tokenB} pool with {fee}% fee. You will be the first liquidity provider.</p>
+              </div>
+              
+              <Button
+                className="w-full"
+                disabled={!isConnected || !amountA || !amountB || parseFloat(amountA) <= 0 || parseFloat(amountB) <= 0 || isLoading}
+                onClick={handleCreatePool}
+              >
+                {!isConnected 
+                  ? "Connect Wallet" 
+                  : !amountA || !amountB || parseFloat(amountA) <= 0 || parseFloat(amountB) <= 0
+                    ? "Enter amounts"
+                    : isLoading
+                      ? "Processing..."
+                      : "Create Pool and Add Liquidity"}
+              </Button>
+            </div>
+          </TabsContent>
           
           <TabsContent value="add" className="space-y-4">
             <TokenSelector
@@ -109,7 +195,7 @@ export const LiquidityPool: React.FC<LiquidityPoolProps> = ({
             />
             
             <div className="text-sm text-muted-foreground">
-              <p>This pool will earn 0.3% of all trades proportional to your share of the pool.</p>
+              <p>This pool will earn {poolExists ? fee : 0.3}% of all trades proportional to your share of the pool.</p>
             </div>
             
             <Button
