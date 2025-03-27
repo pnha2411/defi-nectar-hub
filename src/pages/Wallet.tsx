@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight, ArrowDownRight, Copy, Send } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Copy, Send, Wallet as WalletIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   Dialog,
@@ -64,25 +64,35 @@ const Wallet = () => {
 
   const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
   
-  // Use connected wallet address if available, otherwise use placeholder
-  const walletAddress = address || '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
-  
-  // Generate QR code data URL
+  // Get QR code data URL for the connected wallet
   const getQRCodeUrl = () => {
-    return `https://api.qrserver.com/v1/create-qr-code/?data=${walletAddress}&size=200x200&margin=10`;
+    if (!isConnected || !address) return '';
+    return `https://api.qrserver.com/v1/create-qr-code/?data=${address}&size=200x200&margin=10`;
   };
   
   const copyAddress = () => {
-    navigator.clipboard.writeText(walletAddress);
+    if (!address) {
+      toast.error('No wallet connected');
+      return;
+    }
+    navigator.clipboard.writeText(address);
     toast.success('Address copied to clipboard');
   };
 
   const handleSendDialog = (asset: Asset) => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
     setSelectedAsset(asset);
     setActiveDialog('send');
   };
 
   const handleReceiveDialog = () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
     setActiveDialog('receive');
   };
 
@@ -125,39 +135,47 @@ const Wallet = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {assets.map((asset) => (
-                  <div key={asset.symbol} className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/20 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted/80">
-                        <img 
-                          src={asset.iconUrl} 
-                          alt={`${asset.symbol} icon`}
-                          className="w-6 h-6"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://placehold.co/200x200/EAEAEA/6366F1?text=" + asset.symbol.substring(0, 2);
-                          }}
-                        />
+              {!isConnected ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <WalletIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Connect your wallet</h3>
+                  <p className="text-muted-foreground mb-4">Connect your wallet to view your assets and balance</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {assets.map((asset) => (
+                    <div key={asset.symbol} className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/20 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-muted/80">
+                          <img 
+                            src={asset.iconUrl} 
+                            alt={`${asset.symbol} icon`}
+                            className="w-6 h-6"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://placehold.co/200x200/EAEAEA/6366F1?text=" + asset.symbol.substring(0, 2);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <div className="font-medium">{asset.name}</div>
+                          <div className="text-sm text-muted-foreground">{asset.symbol}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">{asset.name}</div>
-                        <div className="text-sm text-muted-foreground">{asset.symbol}</div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <div className="font-medium">{asset.balance.toLocaleString()} {asset.symbol}</div>
+                          <div className="text-sm text-muted-foreground">${asset.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSendDialog(asset)}>
+                            <ArrowUpRight className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <div className="font-medium">{asset.balance.toLocaleString()} {asset.symbol}</div>
-                        <div className="text-sm text-muted-foreground">${asset.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSendDialog(asset)}>
-                          <ArrowUpRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
           
@@ -167,12 +185,18 @@ const Wallet = () => {
                 <CardTitle>Wallet Address</CardTitle>
               </CardHeader>
               <CardContent className="pb-2">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm overflow-hidden">
-                  <span className="font-mono truncate">{walletAddress}</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 ml-1 flex-shrink-0" onClick={copyAddress}>
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                {!isConnected ? (
+                  <div className="text-center py-3">
+                    <p className="text-muted-foreground text-sm">Connect your wallet to view your address</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm overflow-hidden">
+                    <span className="font-mono truncate">{address}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 ml-1 flex-shrink-0" onClick={copyAddress}>
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -185,6 +209,7 @@ const Wallet = () => {
                   variant="outline" 
                   className="flex flex-col items-center justify-center h-20 px-2 py-1 hover:bg-accent hover:border-primary/30"
                   onClick={() => handleSendDialog(assets[0])}
+                  disabled={!isConnected}
                 >
                   <Send className="h-5 w-5 mb-1" />
                   <span className="text-xs">Send</span>
@@ -193,6 +218,7 @@ const Wallet = () => {
                   variant="outline" 
                   className="flex flex-col items-center justify-center h-20 px-2 py-1 hover:bg-accent hover:border-primary/30"
                   onClick={handleReceiveDialog}
+                  disabled={!isConnected}
                 >
                   <ArrowDownRight className="h-5 w-5 mb-1" />
                   <span className="text-xs">Receive</span>
@@ -269,27 +295,33 @@ const Wallet = () => {
               Share your address to receive tokens.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col items-center py-4">
-            <div className="bg-muted/50 p-6 rounded-lg mb-4">
-              <div className="w-32 h-32 bg-white rounded-lg mb-3">
-                {/* Dynamic QR Code */}
-                <img 
-                  src={getQRCodeUrl()} 
-                  alt="Wallet QR Code" 
-                  className="w-full h-full"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://placehold.co/200x200/EAEAEA/6366F1?text=QR";
-                  }}
-                />
+          {isConnected && address ? (
+            <div className="flex flex-col items-center py-4">
+              <div className="bg-muted/50 p-6 rounded-lg mb-4">
+                <div className="w-32 h-32 bg-white rounded-lg mb-3">
+                  {/* Dynamic QR Code */}
+                  <img 
+                    src={getQRCodeUrl()} 
+                    alt="Wallet QR Code" 
+                    className="w-full h-full"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://placehold.co/200x200/EAEAEA/6366F1?text=QR";
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex w-full items-center space-x-2">
+                <Input value={address} readOnly />
+                <Button variant="outline" size="icon" onClick={copyAddress}>
+                  <Copy className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-            <div className="flex w-full items-center space-x-2">
-              <Input value={walletAddress} readOnly />
-              <Button variant="outline" size="icon" onClick={copyAddress}>
-                <Copy className="h-4 w-4" />
-              </Button>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <p className="text-muted-foreground">Please connect your wallet first</p>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
     </Layout>
