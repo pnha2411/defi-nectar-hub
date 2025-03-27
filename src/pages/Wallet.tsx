@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { Layout } from '@/components/Layout';
-import { TransactionHistory } from '@/components/TransactionHistory';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight, ArrowDownRight, Copy, Send } from 'lucide-react';
@@ -17,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAccount, useBalance } from 'wagmi';
 
 interface Asset {
   name: string;
@@ -32,12 +32,18 @@ const Wallet = () => {
   const [sendAddress, setSendAddress] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   
+  // Get wallet address and balance from wagmi
+  const { address, isConnected } = useAccount();
+  const { data: ethBalance } = useBalance({
+    address,
+  });
+  
   const assets: Asset[] = [
     { 
       name: 'Ethereum', 
       symbol: 'ETH', 
-      balance: 1.245, 
-      value: 4330.41, 
+      balance: ethBalance ? parseFloat(ethBalance.formatted) : 0, 
+      value: ethBalance ? parseFloat(ethBalance.formatted) * 3480.65 : 0, 
       iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' 
     },
     { 
@@ -58,7 +64,13 @@ const Wallet = () => {
 
   const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
   
-  const walletAddress = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+  // Use connected wallet address if available, otherwise use placeholder
+  const walletAddress = address || '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+  
+  // Generate QR code data URL
+  const getQRCodeUrl = () => {
+    return `https://api.qrserver.com/v1/create-qr-code/?data=${walletAddress}&size=200x200&margin=10`;
+  };
   
   const copyAddress = () => {
     navigator.clipboard.writeText(walletAddress);
@@ -260,10 +272,15 @@ const Wallet = () => {
           <div className="flex flex-col items-center py-4">
             <div className="bg-muted/50 p-6 rounded-lg mb-4">
               <div className="w-32 h-32 bg-white rounded-lg mb-3">
-                {/* QR Code placeholder */}
-                <div className="w-full h-full flex items-center justify-center bg-muted">
-                  QR Code
-                </div>
+                {/* Dynamic QR Code */}
+                <img 
+                  src={getQRCodeUrl()} 
+                  alt="Wallet QR Code" 
+                  className="w-full h-full"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://placehold.co/200x200/EAEAEA/6366F1?text=QR";
+                  }}
+                />
               </div>
             </div>
             <div className="flex w-full items-center space-x-2">
