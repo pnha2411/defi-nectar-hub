@@ -9,8 +9,12 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useAccount, useBalance, useReadContract } from 'wagmi';
+import { useAccount, useBalance, useReadContract, useWriteContract } from 'wagmi';
 import { erc20ABI, BASE_TOKENS } from '@/lib/erc20contract';
+import { ethers } from 'ethers';
+import { config } from '@/lib/wagmi';
+
+import {kitABI as abi} from '@/lib/kit';
 
 export const SwapInterface = () => {
   const [fromToken, setFromToken] = useState('ETH');
@@ -37,6 +41,9 @@ export const SwapInterface = () => {
     }
   });
 
+    // Set up the contract write hook for swapping
+  const { writeContract } = useWriteContract();
+  
   const calculateToAmount = (amount: string) => {
     if (!amount) return '';
     
@@ -79,6 +86,16 @@ export const SwapInterface = () => {
     
     // Recalculate amounts
     setToAmount(calculateToAmount(fromAmount));
+
+    writeContract({
+      abi,
+      address: '0x95691fD90c9c28898912906C19BCc6569A736762',
+      functionName: 'createPool',
+      args: [
+        '0xd2135CfB216b74109775236E36d4b433F1DF507B',
+        '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+      ]
+    })
   };
 
   const handleSwap = () => {
