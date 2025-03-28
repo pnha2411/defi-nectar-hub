@@ -97,39 +97,19 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
       
       // Determine amount and token based on the function
       if (functionName === 'swap') {
-        txDetails.amount = typeof serializedArgs[2] === 'object' ? 
-          serializeBigInt(serializedArgs[2]) : 
-          (serializedArgs[2] ? String(serializedArgs[2]) : '');
-        
-        txDetails.token = typeof serializedArgs[0] === 'object' ? 
-          serializeBigInt(serializedArgs[0]) : 
-          (serializedArgs[0] ? String(serializedArgs[0]) : '');
-        
-        txDetails.toToken = typeof serializedArgs[1] === 'object' ? 
-          serializeBigInt(serializedArgs[1]) : 
-          (serializedArgs[1] ? String(serializedArgs[1]) : '');
+        txDetails.amount = serializedArgs[2] ? String(serializedArgs[2]) : '';
+        txDetails.token = serializedArgs[0] ? String(serializedArgs[0]) : '';
+        txDetails.toToken = serializedArgs[1] ? String(serializedArgs[1]) : '';
       } else if (functionName === 'addLiquidity' || functionName === 'removeLiquidity') {
-        txDetails.token = typeof serializedArgs[0] === 'object' ? 
-          serializeBigInt(serializedArgs[0]) : 
-          (serializedArgs[0] ? String(serializedArgs[0]) : '');
-        
-        txDetails.toToken = typeof serializedArgs[1] === 'object' ? 
-          serializeBigInt(serializedArgs[1]) : 
-          (serializedArgs[1] ? String(serializedArgs[1]) : '');
+        txDetails.token = serializedArgs[0] ? String(serializedArgs[0]) : '';
+        txDetails.toToken = serializedArgs[1] ? String(serializedArgs[1]) : '';
         
         if (serializedArgs[2]) {
-          txDetails.amount = typeof serializedArgs[2] === 'object' ? 
-            serializeBigInt(serializedArgs[2]) : 
-            String(serializedArgs[2]);
+          txDetails.amount = String(serializedArgs[2]);
         }
       } else if (functionName === 'createPool') {
-        txDetails.token = typeof serializedArgs[0] === 'object' ? 
-          serializeBigInt(serializedArgs[0]) : 
-          (serializedArgs[0] ? String(serializedArgs[0]) : '');
-        
-        txDetails.toToken = typeof serializedArgs[1] === 'object' ? 
-          serializeBigInt(serializedArgs[1]) : 
-          (serializedArgs[1] ? String(serializedArgs[1]) : '');
+        txDetails.token = serializedArgs[0] ? String(serializedArgs[0]) : '';
+        txDetails.toToken = serializedArgs[1] ? String(serializedArgs[1]) : '';
       }
       
       try {
