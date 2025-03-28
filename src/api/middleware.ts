@@ -11,7 +11,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
     }
     
-    const txDetails = body as TransactionDetails;
+    // Ensure the body conforms to TransactionDetails interface
+    const txDetails: TransactionDetails = {
+      hash: body.hash || '',
+      from: body.from || '',
+      to: body.to || '',
+      functionName: body.functionName || '',
+      args: typeof body.args === 'string' ? body.args : JSON.stringify(body.args || []),
+      value: body.value || '0',
+      status: body.status || 'pending',
+      timestamp: body.timestamp || new Date().toISOString(),
+      type: body.type || 'send',
+      amount: body.amount,
+      token: body.token,
+      toToken: body.toToken
+    };
+    
     const data = await saveTransaction(txDetails);
     
     return NextResponse.json({ success: true, data });

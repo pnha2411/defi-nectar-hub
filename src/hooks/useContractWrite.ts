@@ -16,6 +16,12 @@ interface UseContractWriteProps {
   abi: any;
 }
 
+interface WriteContractConfig {
+  value?: string;
+  onSuccess?: (hash: string) => void;
+  onError?: (error: Error) => void;
+}
+
 export function useContractWrite({ address, abi }: UseContractWriteProps) {
   const { data: walletClient } = useWalletClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -25,11 +31,7 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
   const writeContract = async (
     functionName: string, 
     args: any[],
-    config?: {
-      value?: string;
-      onSuccess?: (hash: string) => void;
-      onError?: (error: Error) => void;
-    }
+    config?: WriteContractConfig
   ) => {
     if (!walletClient) {
       toast.error('Wallet not connected');
@@ -72,18 +74,18 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
       
       // Determine amount and token based on the function
       if (functionName === 'swap') {
-        txDetails.amount = formatEther(args[2]);
-        txDetails.token = args[0];
-        txDetails.toToken = args[1];
+        txDetails.amount = String(args[2]);
+        txDetails.token = String(args[0]);
+        txDetails.toToken = String(args[1]);
       } else if (functionName === 'addLiquidity' || functionName === 'removeLiquidity') {
-        txDetails.token = args[0];
-        txDetails.toToken = args[1];
+        txDetails.token = String(args[0]);
+        txDetails.toToken = String(args[1]);
         if (args[2]) {
-          txDetails.amount = formatEther(args[2]);
+          txDetails.amount = String(args[2]);
         }
       } else if (functionName === 'createPool') {
-        txDetails.token = args[0];
-        txDetails.toToken = args[1];
+        txDetails.token = String(args[0]);
+        txDetails.toToken = String(args[1]);
       }
       
       await saveTransaction(txDetails);

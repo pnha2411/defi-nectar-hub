@@ -40,7 +40,7 @@ export interface TransactionDetails {
 }
 
 // Contract addresses
-export const kitContractAddress = '0x9a4dba72612dd5dab23dfb422dc70c3c34e98e02'; // Example address, replace with actual KIT contract address
+export const kitContractAddress = '0x9a4dba72612dd5dab23dfb422dc70c3c34e98e02'; // Example address
 
 export const saveTransaction = async (txDetails: TransactionDetails) => {
   try {
