@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,6 @@ export const SwapCard: React.FC<SwapCardProps> = ({
   
   const { isConnected } = useAccount();
   
-  // Initialize contract write hook
   const { writeContract, isLoading: isTransactionLoading, status: transactionStatus } = useContractWrite({
     address: kitContractAddress as `0x${string}`,
     abi: kitABI,
@@ -51,14 +49,12 @@ export const SwapCard: React.FC<SwapCardProps> = ({
     setFromToken(toToken);
     setToToken(tempToken);
     
-    // Recalculate amounts
     setToAmount(calculateExchangeAmount(fromAmount, toToken, fromToken));
   };
 
   const calculateExchangeAmount = (amount: string, from: string, to: string) => {
     if (!amount) return '';
     
-    // For demo purposes, define some mock exchange rates
     const rates: Record<string, Record<string, number>> = {
       'ETH': { 'USDC': 3500, 'USDT': 3500, 'BASE': 350 },
       'USDC': { 'ETH': 0.000286, 'USDT': 1, 'BASE': 0.1 },
@@ -84,7 +80,6 @@ export const SwapCard: React.FC<SwapCardProps> = ({
   const handleToAmountChange = (value: string) => {
     if (/^[0-9]*[.,]?[0-9]*$/.test(value)) {
       setToAmount(value);
-      // Reverse calculation
       const reverseAmount = calculateExchangeAmount(value, toToken, fromToken);
       setFromAmount(reverseAmount);
     }
@@ -101,7 +96,6 @@ export const SwapCard: React.FC<SwapCardProps> = ({
       return;
     }
     
-    // For demo purposes, mock token addresses - in a real app, get these from a token list
     const tokenAddresses: Record<string, `0x${string}`> = {
       'ETH': '0xd2135CfB216b74109775236E36d4b433F1DF507B',
       'USDC': '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
@@ -111,14 +105,13 @@ export const SwapCard: React.FC<SwapCardProps> = ({
     
     const tokenInAddress = tokenAddresses[fromToken];
     const tokenOutAddress = tokenAddresses[toToken];
-    const parsedAmount = parseUnits(fromAmount, 18); // Assuming 18 decimals for demo
-    const minOutAmount = parseUnits(toAmount, 18).toString();
     
     try {
-      // Add a 5% slippage as minAmountOut for demo purposes
-      const minAmountOut = BigInt(parseInt(minOutAmount) * (1 - (slippage[0] / 100)));
+      const parsedAmount = parseUnits(fromAmount, 18);
+      const estimatedOutputAmount = parseUnits(toAmount, 18);
+      const slippagePercent = slippage[0] / 100;
+      const minAmountOut = estimatedOutputAmount * BigInt(Math.floor((1 - slippagePercent) * 100)) / BigInt(100);
       
-      // Execute the swap
       await writeContract('swap', [
         tokenInAddress,
         tokenOutAddress,

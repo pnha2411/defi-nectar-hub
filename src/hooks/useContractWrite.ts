@@ -23,6 +23,20 @@ interface WriteContractConfig {
   onError?: (error: Error) => void;
 }
 
+// Helper function to safely serialize BigInt values
+const serializeBigInt = (value: any): any => {
+  if (typeof value === 'bigint') {
+    return value.toString();
+  } else if (Array.isArray(value)) {
+    return value.map(serializeBigInt);
+  } else if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, serializeBigInt(v)])
+    );
+  }
+  return value;
+};
+
 export function useContractWrite({ address, abi }: UseContractWriteProps) {
   const { data: walletClient } = useWalletClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -65,12 +79,16 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
       
       // Save transaction details to Supabase
       const fromAddress = walletClient.account.address;
+      
+      // Serialize args to prevent BigInt JSON issues
+      const serializedArgs = serializeBigInt(args);
+      
       const txDetails: TransactionDetails = {
         hash: hash,
         from: fromAddress,
         to: address,
         functionName,
-        args: JSON.stringify(args),
+        args: JSON.stringify(serializedArgs),
         value: config?.value || '0',
         status: 'pending',
         timestamp: new Date().toISOString(),
@@ -79,21 +97,26 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
       
       // Determine amount and token based on the function
       if (functionName === 'swap') {
-        txDetails.amount = String(args[2] || '');
-        txDetails.token = String(args[0] || '');
-        txDetails.toToken = String(args[1] || '');
+        txDetails.amount = serializedArgs[2] ? serializedArgs[2].toString() : '';
+        txDetails.token = serializedArgs[0] ? serializedArgs[0].toString() : '';
+        txDetails.toToken = serializedArgs[1] ? serializedArgs[1].toString() : '';
       } else if (functionName === 'addLiquidity' || functionName === 'removeLiquidity') {
-        txDetails.token = String(args[0] || '');
-        txDetails.toToken = String(args[1] || '');
-        if (args[2]) {
-          txDetails.amount = String(args[2]);
+        txDetails.token = serializedArgs[0] ? serializedArgs[0].toString() : '';
+        txDetails.toToken = serializedArgs[1] ? serializedArgs[1].toString() : '';
+        if (serializedArgs[2]) {
+          txDetails.amount = serializedArgs[2].toString();
         }
       } else if (functionName === 'createPool') {
-        txDetails.token = String(args[0] || '');
-        txDetails.toToken = String(args[1] || '');
+        txDetails.token = serializedArgs[0] ? serializedArgs[0].toString() : '';
+        txDetails.toToken = serializedArgs[1] ? serializedArgs[1].toString() : '';
       }
       
-      await saveTransaction(txDetails);
+      try {
+        await saveTransaction(txDetails);
+      } catch (error) {
+        console.error('Failed to save transaction to database:', error);
+        // Continue execution even if saving to database fails
+      }
       
       // Wait for the transaction to be mined
       const receipt = await waitForTransaction(publicClient, hash);
@@ -111,9 +134,15 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
         
         // Update transaction status in Supabase
         txDetails.status = 'success';
-        await saveTransaction(txDetails);
+        try {
+          await saveTransaction(txDetails);
+        } catch (error) {
+          console.error('Failed to update transaction status:', error);
+        }
         
-        config?.onSuccess?.(hash);
+        if (config?.onSuccess) {
+          config.onSuccess(hash);
+        }
       } else {
         setStatus('error');
         toast.error('Transaction failed', {
@@ -123,7 +152,11 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
         
         // Update transaction status in Supabase
         txDetails.status = 'error';
-        await saveTransaction(txDetails);
+        try {
+          await saveTransaction(txDetails);
+        } catch (error) {
+          console.error('Failed to update transaction status:', error);
+        }
       }
       
       return hash;
