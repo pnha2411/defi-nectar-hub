@@ -8,6 +8,10 @@ import { SwapSettings } from './SwapSettings';
 import { ArrowDown, Settings } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
+import { useContractWrite } from '@/hooks/useContractWrite';
+import { kitContractAddress } from '@/lib/contractUtils';
+import { kitABI } from '@/lib/kit';
+import { parseUnits } from 'viem';
 
 export interface SwapCardProps {
   className?: string;
@@ -35,6 +39,12 @@ export const SwapCard: React.FC<SwapCardProps> = ({
   const [deadline, setDeadline] = useState('30');
   
   const { isConnected } = useAccount();
+  
+  // Initialize contract write hook
+  const { writeContract, isLoading: isTransactionLoading, status: transactionStatus } = useContractWrite({
+    address: kitContractAddress as `0x${string}`,
+    abi: kitABI,
+  });
 
   const handleTokenSwap = () => {
     const tempToken = fromToken;
@@ -80,7 +90,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
     }
   };
 
-  const handleSwap = () => {
+  const handleSwap = async () => {
     if (!fromAmount || parseFloat(fromAmount) <= 0) {
       toast.error('Please enter a valid amount');
       return;
@@ -91,11 +101,53 @@ export const SwapCard: React.FC<SwapCardProps> = ({
       return;
     }
     
-    if (onSwap) {
-      onSwap(fromToken, toToken, fromAmount, toAmount);
-    } else {
-      toast.success('Swap initiated', {
-        description: `Swapping ${fromAmount} ${fromToken} to ${toAmount} ${toToken}`,
+    // For demo purposes, mock token addresses - in a real app, get these from a token list
+    const tokenAddresses: Record<string, `0x${string}`> = {
+      'ETH': '0xd2135CfB216b74109775236E36d4b433F1DF507B',
+      'USDC': '0xA0Cf798816D4b9b9866b5330EEa46a18382f251e',
+      'USDT': '0x95691fD90c9c28898912906C19BCc6569A736762',
+      'BASE': '0x9a4dba72612dd5dab23dfb422dc70c3c34e98e02'
+    };
+    
+    const tokenInAddress = tokenAddresses[fromToken];
+    const tokenOutAddress = tokenAddresses[toToken];
+    const parsedAmount = parseUnits(fromAmount, 18); // Assuming 18 decimals for demo
+    const minOutAmount = parseUnits(toAmount, 18).toString();
+    
+    try {
+      // Add a 5% slippage as minAmountOut for demo purposes
+      const minAmountOut = BigInt(parseInt(minOutAmount) * (1 - (slippage[0] / 100)));
+      
+      // Execute the swap
+      await writeContract('swap', [
+        tokenInAddress,
+        tokenOutAddress,
+        parsedAmount,
+        minAmountOut
+      ], {
+        onSuccess: (hash) => {
+          toast.success('Swap transaction submitted', {
+            description: `Swapping ${fromAmount} ${fromToken} to ${toAmount} ${toToken}`,
+            action: {
+              label: 'View',
+              onClick: () => window.open(`https://shannon-explorer.somnia.network/tx/${hash}`, '_blank')
+            }
+          });
+          
+          if (onSwap) {
+            onSwap(fromToken, toToken, fromAmount, toAmount);
+          }
+        },
+        onError: (error) => {
+          toast.error('Swap failed', {
+            description: error.message || 'Transaction could not be completed'
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Swap error:', error);
+      toast.error('Failed to initiate swap', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred'
       });
     }
   };
@@ -162,15 +214,15 @@ export const SwapCard: React.FC<SwapCardProps> = ({
       <CardFooter>
         <Button
           className="w-full"
-          disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || isLoading}
+          disabled={!isConnected || !fromAmount || parseFloat(fromAmount) <= 0 || isTransactionLoading}
           onClick={handleSwap}
         >
           {!isConnected 
             ? "Connect Wallet" 
             : !fromAmount || parseFloat(fromAmount) <= 0
               ? "Enter an amount"
-              : isLoading
-                ? "Processing..."
+              : isTransactionLoading
+                ? "Swapping..."
                 : "Swap"}
         </Button>
       </CardFooter>

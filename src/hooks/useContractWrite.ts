@@ -6,7 +6,8 @@ import {
   waitForTransaction, 
   saveTransaction, 
   TransactionDetails, 
-  mapFunctionToType 
+  mapFunctionToType,
+  getExplorerUrl
 } from '@/lib/contractUtils';
 import { parseEther, formatEther } from 'viem';
 import { toast } from 'sonner';
@@ -56,6 +57,10 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
       // Show toast notification for pending transaction
       const toastId = toast.loading('Transaction pending', {
         description: 'Your transaction is being processed',
+        action: {
+          label: 'View',
+          onClick: () => window.open(getExplorerUrl(hash), '_blank')
+        }
       });
       
       // Save transaction details to Supabase
@@ -74,18 +79,18 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
       
       // Determine amount and token based on the function
       if (functionName === 'swap') {
-        txDetails.amount = String(args[2]);
-        txDetails.token = String(args[0]);
-        txDetails.toToken = String(args[1]);
+        txDetails.amount = String(args[2] || '');
+        txDetails.token = String(args[0] || '');
+        txDetails.toToken = String(args[1] || '');
       } else if (functionName === 'addLiquidity' || functionName === 'removeLiquidity') {
-        txDetails.token = String(args[0]);
-        txDetails.toToken = String(args[1]);
+        txDetails.token = String(args[0] || '');
+        txDetails.toToken = String(args[1] || '');
         if (args[2]) {
           txDetails.amount = String(args[2]);
         }
       } else if (functionName === 'createPool') {
-        txDetails.token = String(args[0]);
-        txDetails.toToken = String(args[1]);
+        txDetails.token = String(args[0] || '');
+        txDetails.toToken = String(args[1] || '');
       }
       
       await saveTransaction(txDetails);
@@ -98,6 +103,10 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
         toast.success('Transaction successful', {
           id: toastId,
           description: 'Your transaction has been processed successfully',
+          action: {
+            label: 'View',
+            onClick: () => window.open(getExplorerUrl(hash), '_blank')
+          }
         });
         
         // Update transaction status in Supabase
@@ -126,7 +135,10 @@ export function useContractWrite({ address, abi }: UseContractWriteProps) {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
       });
       
-      config?.onError?.(error as Error);
+      if (config?.onError && error instanceof Error) {
+        config.onError(error);
+      }
+      
       return null;
     } finally {
       setIsLoading(false);
