@@ -17,7 +17,7 @@ import { config } from '@/lib/wagmi';
 import {kitABI as abi} from '@/lib/kit';
 
 export const SwapInterface = () => {
-  const [fromToken, setFromToken] = useState('ETH');
+  const [fromToken, setFromToken] = useState('STT');
   const [toToken, setToToken] = useState('USDC');
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
@@ -30,14 +30,14 @@ export const SwapInterface = () => {
     address,
   });
   
-  // Read ERC20 token balance if the selected token is not ETH
+  // Read ERC20 token balance if the selected token is not STT
   const { data: tokenBalanceData } = useReadContract({
     abi: erc20ABI,
     address: BASE_TOKENS[fromToken]?.address as `0x${string}`,
     functionName: 'balanceOf',
     args: [address as `0x${string}`],
     query: {
-      enabled: isConnected && fromToken !== 'ETH' && !!address,
+      enabled: isConnected && fromToken !== 'STT' && !!address,
     }
   });
 
@@ -49,10 +49,8 @@ export const SwapInterface = () => {
     
     // For demo purposes, define some mock exchange rates
     const rates: Record<string, Record<string, number>> = {
-      'ETH': { 'USDC': 3500, 'USDT': 3500, 'BASE': 350 },
-      'USDC': { 'ETH': 0.000286, 'USDT': 1, 'BASE': 0.1 },
-      'USDT': { 'ETH': 0.000286, 'USDC': 1, 'BASE': 0.1 },
-      'BASE': { 'ETH': 0.00286, 'USDC': 10, 'USDT': 10 },
+      'STT': { 'USDC': 2400},
+      'USDC': { 'STT': 0.000286},
     };
     
     if (fromToken === toToken) return amount;
@@ -117,7 +115,7 @@ export const SwapInterface = () => {
   const getDisplayBalance = () => {
     if (!isConnected) return '0';
     
-    if (fromToken === 'ETH' && balanceData) {
+    if (fromToken === 'STT' && balanceData) {
       return parseFloat(balanceData.formatted).toFixed(4);
     }
     
@@ -199,7 +197,7 @@ export const SwapInterface = () => {
                 size="sm"
                 className="absolute right-1 top-1 h-7"
                 onClick={() => {
-                  if (fromToken === 'ETH' && balanceData) {
+                  if (fromToken === 'STT' && balanceData) {
                     handleFromAmountChange(balanceData.formatted);
                   } else if (tokenBalanceData) {
                     const decimals = BASE_TOKENS[fromToken]?.decimals || 18;

@@ -26,10 +26,10 @@ export interface SwapCardProps {
 export const SwapCard: React.FC<SwapCardProps> = ({
   className,
   onSwap,
-  defaultFromToken = 'ETH',
+  defaultFromToken = 'STT',
   defaultToToken = 'USDC',
   isLoading = false,
-  supportedTokens = ['ETH', 'USDC', 'USDT', 'BASE']
+  supportedTokens = ['STT', 'USDC']
 }) => {
   const [fromToken, setFromToken] = useState(defaultFromToken);
   const [toToken, setToToken] = useState(defaultToToken);
@@ -66,10 +66,8 @@ export const SwapCard: React.FC<SwapCardProps> = ({
     if (!amount) return '';
     
     const rates: Record<string, Record<string, number>> = {
-      'ETH': { 'USDC': 3500, 'USDT': 3500, 'BASE': 350 },
-      'USDC': { 'ETH': 0.000286, 'USDT': 1, 'BASE': 0.1 },
-      'USDT': { 'ETH': 0.000286, 'USDC': 1, 'BASE': 0.1 },
-      'BASE': { 'ETH': 0.00286, 'USDC': 10, 'USDT': 10 },
+      'STT': { 'USDC': 2400 },
+      'USDC': { 'STT': 0.000286 },
     };
     
     if (from === to) return amount;
@@ -148,6 +146,11 @@ export const SwapCard: React.FC<SwapCardProps> = ({
       toast.error('Please connect your wallet first');
       return;
     }
+    
+    const tokenAddresses: Record<string, `0x${string}`> = {
+      'STT': '0xA1F002bf7cAD148a639418D77b93912871901875',
+      'USDC': '0x65296738D4E5edB1515e40287B6FDf8320E6eE04',
+    };
     
     const tokenInAddress = tokenAddresses[fromToken];
     const tokenOutAddress = tokenAddresses[toToken];
