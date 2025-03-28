@@ -3,6 +3,7 @@ import { createPublicClient, http, parseAbi, parseUnits, PublicClient, formatUni
 import { kitABI } from './kit';
 import { somnia_testnet } from './wagmi';
 import { toast } from 'sonner';
+import { saveTransaction as saveTransactionToStorage } from '@/api/transactions';
 
 // Initialize public client
 export const publicClient = createPublicClient({
@@ -44,19 +45,8 @@ export const kitContractAddress = '0x9a4dba72612dd5dab23dfb422dc70c3c34e98e02'; 
 
 export const saveTransaction = async (txDetails: TransactionDetails) => {
   try {
-    const response = await fetch('/api/transactions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(txDetails),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to save transaction');
-    }
-    
-    return await response.json();
+    // Use the function from api/transactions.ts
+    return await saveTransactionToStorage(txDetails);
   } catch (error) {
     console.error('Error saving transaction:', error);
     return null;

@@ -43,10 +43,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   }, [address, isConnected, limit]);
   
   const fetchTransactions = async () => {
+    if (!isConnected || !address) {
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
-      const txData = await getTransactions(address!, limit);
+      const txData = await getTransactions(address, limit);
       setTransactions(txData || []);
     } catch (err) {
       console.error('Error fetching transactions:', err);
@@ -171,6 +175,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         ) : error ? (
           <div className="text-center py-8 text-destructive">
             {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchTransactions}
+              className="mt-2 mx-auto block"
+            >
+              Try Again
+            </Button>
           </div>
         ) : transactions.length > 0 ? (
           <div className="space-y-3">
