@@ -4,8 +4,8 @@ import type { TransactionDetails } from '@/lib/contractUtils';
 
 // Initialize Supabase client with environment variables
 // This should be replaced with your actual Supabase URL and key
-const supabaseUrl = process.env.SUPABASE_URL || 'https://your-supabase-url.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY || 'your-supabase-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || 'your-supabase-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function saveTransaction(txDetails: TransactionDetails) {
