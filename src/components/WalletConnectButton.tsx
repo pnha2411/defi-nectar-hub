@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Wallet } from 'lucide-react';
+import { Wallet, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { useAccount, useConnect, useDisconnect, useBalance } from 'wagmi';
 import { injected } from 'wagmi/connectors';
+import { getAddressExplorerUrl } from '@/lib/contractUtils';
 
 export const WalletConnectButton: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -74,6 +75,12 @@ export const WalletConnectButton: React.FC = () => {
     return `${address.substring(0, 6)}...${address.substring(
       address.length - 4
     )}`;
+  };
+
+  const openExplorer = () => {
+    if (address) {
+      window.open(getAddressExplorerUrl(address), '_blank');
+    }
   };
 
   return (
@@ -155,12 +162,9 @@ export const WalletConnectButton: React.FC = () => {
                 <Button 
                   variant="outline" 
                   className="justify-start hover-scale"
-                  onClick={() => {
-                    if (address) {
-                      window.open(`https://shannon-explorer.somnia.network/address/${address}`, '_blank');
-                    }
-                  }}
+                  onClick={openExplorer}
                 >
+                  <ExternalLink className="h-4 w-4 mr-2" />
                   View on Explorer
                 </Button>
                 <Button variant="destructive" onClick={disconnectWallet}>

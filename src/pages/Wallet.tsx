@@ -16,7 +16,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAccount, useBalance } from 'wagmi';
+import { useAccount, useBalance, useWalletClient } from 'wagmi';
+import { TransactionHistory } from '@/components/TransactionHistory';
+import { kitContractAddress } from '@/lib/contractUtils';
+import { kitABI } from '@/lib/kit';
+import { useContractWrite } from '@/hooks/useContractWrite';
+import { BASE_TOKENS, parseTokenAmount } from '@/lib/erc20contract';
 
 interface Asset {
   name: string;
@@ -24,6 +29,7 @@ interface Asset {
   balance: number;
   value: number;
   iconUrl: string;
+  address?: string;
 }
 
 const Wallet = () => {
@@ -38,27 +44,36 @@ const Wallet = () => {
     address,
   });
   
+  // Contract write hook
+  const { writeContract, isLoading: isTransactionLoading } = useContractWrite({
+    address: kitContractAddress as `0x${string}`,
+    abi: kitABI,
+  });
+  
   const assets: Asset[] = [
     { 
       name: 'Ethereum', 
       symbol: 'ETH', 
       balance: ethBalance ? parseFloat(ethBalance.formatted) : 0, 
       value: ethBalance ? parseFloat(ethBalance.formatted) * 3480.65 : 0, 
-      iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' 
+      iconUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
+      address: BASE_TOKENS.ETH.address as string
     },
     { 
       name: 'USD Coin', 
       symbol: 'USDC', 
       balance: 1235.75, 
       value: 1235.75, 
-      iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png' 
+      iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
+      address: BASE_TOKENS.USDC.address as string
     },
     { 
       name: 'Somnia', 
       symbol: 'STT', 
       balance: 75.25, 
       value: 215.97, 
-      iconUrl: 'stt.png' 
+      iconUrl: 'stt.png',
+      address: '0x0000000000000000000000000000000000000001' // Replace with actual STT address
     },
   ];
 
@@ -96,19 +111,54 @@ const Wallet = () => {
     setActiveDialog('receive');
   };
 
-  const handleSendSubmit = () => {
+  const handleSendSubmit = async () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+    
     if (!sendAddress || !sendAmount || parseFloat(sendAmount) <= 0) {
       toast.error('Please enter a valid amount and address');
       return;
     }
     
-    toast.success('Transaction initiated', {
-      description: `Sending ${sendAmount} ${selectedAsset?.symbol} to ${sendAddress.substring(0, 6)}...${sendAddress.substring(sendAddress.length - 4)}`,
-    });
+    if (!selectedAsset) {
+      toast.error('No asset selected');
+      return;
+    }
     
-    setActiveDialog(null);
-    setSendAmount('');
-    setSendAddress('');
+    try {
+      // For ETH, we use a different approach than ERC20 tokens
+      if (selectedAsset.symbol === 'ETH') {
+        // Native token transfer is handled separately
+        const hash = await writeContract('earnYield', [parseTokenAmount(sendAmount, BASE_TOKENS.ETH)], {
+          value: sendAmount,
+          onSuccess: (hash) => {
+            toast.success('Transaction submitted', {
+              description: `Transaction hash: ${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`
+            });
+            setActiveDialog(null);
+            setSendAmount('');
+            setSendAddress('');
+          }
+        });
+      } else {
+        // ERC20 token transfer
+        // This is a mock for now - in a real implementation you'd need the ERC20 contract
+        toast.success('Transaction initiated', {
+          description: `Sending ${sendAmount} ${selectedAsset.symbol} to ${sendAddress.substring(0, 6)}...${sendAddress.substring(sendAddress.length - 4)}`,
+        });
+        
+        setActiveDialog(null);
+        setSendAmount('');
+        setSendAddress('');
+      }
+    } catch (error) {
+      console.error('Error sending transaction:', error);
+      toast.error('Transaction failed', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+      });
+    }
   };
 
   return (
@@ -228,7 +278,7 @@ const Wallet = () => {
           </div>
         </div>
         
-        {/* <TransactionHistory limit={5} /> */}
+        <TransactionHistory limit={5} />
       </div>
 
       {/* Send Dialog */}
