@@ -41,7 +41,7 @@ export interface TransactionDetails {
 }
 
 // Contract addresses
-export const kitContractAddress = '0x95691fD90c9c28898912906C19BCc6569A736762';
+export const kitContractAddress = '0xA1F002bf7cAD148a639418D77b93912871901875';
 
 export const saveTransaction = async (txDetails: TransactionDetails) => {
   try {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import { toast } from 'sonner';
 import { useContractWrite } from '@/hooks/useContractWrite';
 import { kitContractAddress } from '@/lib/contractUtils';
 import { kitABI } from '@/lib/kit';
-import { parseUnits } from 'viem';
+import { parseUnits, parseEther } from 'viem';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export interface SwapCardProps {
@@ -66,7 +65,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
     if (!amount) return '';
     
     const rates: Record<string, Record<string, number>> = {
-      'STT': { 'USDC': 2400 },
+      'STT': { 'USDC': 240 },
       'USDC': { 'STT': 0.000286 },
     };
     
@@ -108,10 +107,7 @@ export const SwapCard: React.FC<SwapCardProps> = ({
     }
     
     try {
-      await writeContract('createPool', [
-        tokenInAddress,
-        tokenOutAddress
-      ], {
+      await writeContract('buyGold', [], {
         onSuccess: (hash) => {
           toast.success('Pool creation transaction submitted', {
             description: `Creating ${fromToken}-${toToken} pool`,
@@ -161,12 +157,8 @@ export const SwapCard: React.FC<SwapCardProps> = ({
       const slippagePercent = slippage[0] / 100;
       const minAmountOut = estimatedOutputAmount * BigInt(Math.floor((1 - slippagePercent) * 100)) / BigInt(100);
       
-      await writeContract('swap', [
-        tokenInAddress,
-        tokenOutAddress,
-        parsedAmount,
-        minAmountOut
-      ], {
+      await writeContract('buyGold', [], {
+        value: parseEther('0.00000000000000000001').toString(),
         onSuccess: (hash) => {
           toast.success('Swap transaction submitted', {
             description: `Swapping ${fromAmount} ${fromToken} to ${toAmount} ${toToken}`,
